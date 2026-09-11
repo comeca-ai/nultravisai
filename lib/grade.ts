@@ -56,8 +56,9 @@ async function getText(url: string): Promise<{ status: number; text: string; url
     redirect: "follow",
     headers: {
       "user-agent":
-        "NultravisBot/0.1 (+https://github.com/comeca-ai/nultravisai) Mozilla/5.0",
-      accept: "text/html,text/plain,*/*",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "accept-language": "pt-BR,pt;q=0.9,en;q=0.8",
     },
     cache: "no-store",
   });
@@ -72,6 +73,13 @@ export async function gradeHost(host: string): Promise<GradeResult> {
     home = await getText(homeUrl);
   } catch {
     throw new Error(`Não abriu https://${host}. Site fora ou bloqueou o fetch.`);
+  }
+
+  const blocked = home.status === 406 || home.status === 403 || home.status === 401;
+  if (blocked) {
+    throw new Error(
+      `https://${host} recusou o fetch (HTTP ${home.status}). WAF/bot wall — não é score.`
+    );
   }
 
   const html = home.text.slice(0, 400_000);
